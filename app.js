@@ -11,7 +11,7 @@ app.use(session({
     secret: '00000', 
     resave: false,
     saveUninitialized: false,
-    cookie: {path : '/',secure: true} 
+    cookie: {path : '/',secure: false} 
   }));
 
 const routes = require("./routes/pages"); // Import the routes defined in the pages module
