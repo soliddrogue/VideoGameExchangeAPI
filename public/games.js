@@ -1,3 +1,5 @@
+
+
 // Function to retrieve the currently logged-in user ID
 function getCurrentUserId(req) {
     // Check if there is a user session in the request
@@ -29,9 +31,11 @@ function displayUserGames(userGames) {
 }
 
 
-// Function to save game data to the server
-async function saveGameInfo(gameData, userID) {
-    gameData.user = userID;
+async function saveGameInfo(gameData) {
+    // Ensure that the 'user' field is present in the gameData object
+    if (!gameData.user) {
+        throw new Error('User ID is required');
+    }
 
     const response = await fetch('/games', {
         method: 'POST',
@@ -43,18 +47,5 @@ async function saveGameInfo(gameData, userID) {
 
     if (!response.ok) {
         throw new Error('Failed to save game');
-    }
-}
-
-async function deleteGame(gameId) {
-    const response = await fetch(`/games/${gameId}`, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    });
-
-    if (!response.ok) {
-        throw new Error('Failed to delete game');
     }
 }

@@ -6,8 +6,9 @@ const app = express()
 const User = require('../models/userModel');
 const Games = require('../models/gamesModel');
 const Offer = require('../models/offerModel');
+const {isLoggedIn} = require('../middleware/auth');
+app.use(isLoggedIn);
 
-const {isLoggedIn, isOfferedUser} = require('../middleware/auth');
 app.use(express.static('public'))
 
 // Route to handle signup
@@ -57,7 +58,11 @@ router.post('/signup', async (req, res) => {
         // Save the new user to the database
         const savedUser = await newUser.save();
 
-       
+       res.json({
+            status:"Success",
+            message:"User Successfully Signed up"
+       });
+       req.session.save();
         console.log('User saved to database:', savedUser);
     } catch (error) {
         console.error(error);
@@ -69,7 +74,7 @@ router.post('/signup', async (req, res) => {
 });
 
 // Route to handle login
-router.post('/login', /*isLoggedIn,*/ (req, res) => {
+router.post('/login', (req, res) => {
     // Extract email and password from request body
     let { email, password } = req.body;
     email = email.trim();
@@ -82,7 +87,7 @@ router.post('/login', /*isLoggedIn,*/ (req, res) => {
             message: "Empty Credentials"
         });
     } else {
-        // Check if the user exists in the database
+        //Check if the user exists in the database
         User.findOne({ email })
             .then(data => {
                 if (data) {
@@ -91,33 +96,76 @@ router.post('/login', /*isLoggedIn,*/ (req, res) => {
                     bcrypt.compare(password, hashedPassword).then(result => {
                         if (result) {
                             req.session.user = {
-                                //id: data._id,
-                                email: data.email,
-                                password:data.password,   
+                                id: data.id,
+                                email: data.email  
                             };
-                            console.log("user successfully logged in");
+                            //req.session.isLoggedIn() =  true;
+                                res.json({
+                                    status:"Success",
+                                    message:"User Sucessfully Logged in"
+                                })
+                           
                         } else {
                             res.json({
                                 status: "FAILED",
                                 message: "Invalid password"
                             });
                         }
-                    })
-                    
-
+                    });
+                }else{
+                    res.json({
+                        status: "FAILED",
+                        message: "User Not Found"
+                    });
                 }
-            })
+            })  
+            .catch(error => {
+                console.error('Error during user login:', error);
+                res.status(500).json({
+                    status: "FAILED",
+                    message: "An error occurred during login"
+                });
+            });
     }
 });
 
 
-router.put('/login', (req, res)=>{
+router.put('/login', isLoggedIn, async (req, res)=>{
 
+try {
+    console.log(req.session.user);
+        const userId = req.session.user.id;
+        const { newPassword } = req.body;
+        
+        // Validate input
+        if (newPassword.length < 7) {
+            return res.json({
+                status: "FAILED",
+                message: "New password is too short"
+            });
+        }
 
+        // Hash the new password
+        const saltRounds = 10;
+        const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
 
-    
+        // Update the user's password in the database
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { $set: { password: hashedNewPassword } },
+            { new: true }
+        );
+
+        res.json({
+            status: "Success",
+            message: "User password successfully updated",
+            updatedUser: updatedUser
+        });
+    } catch (error) {
+        console.error('Error in updating user:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
 });
-
 
 // Route to handle logout
 router.get('/logout', (req, res) => {
@@ -132,23 +180,87 @@ router.get('/logout', (req, res) => {
     });
 });
 
-
-
 // Route to save games data to the database
-router.post('/games' ,async (req, res) => {
+router.post('/games', async (req, res) => {
     try {
+        const userEmail = req.body.email; // Assuming the email is provided in the request body
+
+        // Find the user by email to get their ID
+        const user = await User.findOne({ email: userEmail });
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
         // Create a new games instance
-        const games = new Games(req.body);
+        const games = new Games({
+            name: req.body.name,
+            publisher: req.body.publisher,
+            system: req.body.system,
+            condition: req.body.condition,
+            date: req.body.date,
+            user: user.id // Associate the game with the user's ID
+        });
+
         // Save the new games to the database
         await games.save();
-        // Respond with a success message and the saved games data
-        res.status(201).send(games);
+
+        res.status(201).json(games);
     } catch (error) {
         // Respond with an error message if saving fails
-        res.status(400).send(error);
+        res.status(400).json({ error: error.message });
     }
 });
 
+
+
+
+// Route to get all games for a user
+router.get('/games/:email', async (req, res) => {
+    try {
+        const userEmail = req.params.userId;
+
+        const userGames = await Games.find({ user: userEmail });
+
+        res.status(200).json(userGames);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Route to update a game by ID
+router.put('/games/:gameId', async (req, res) => {
+    try {
+        const gameId = req.params.gameId;
+
+        const updatedGame = await Games.findByIdAndUpdate(gameId, req.body, { new: true });
+
+        if (!updatedGame) {
+            return res.status(404).json({ error: 'Game not found' });
+        }
+
+        res.status(200).json(updatedGame);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Route to delete a game by ID
+router.delete('/games/:gameId', async (req, res) => {
+    try {
+        const gameId = req.params.gameId;
+
+        const deletedGame = await Games.findByIdAndDelete(gameId);
+
+        if (!deletedGame) {
+            return res.status(404).json({ error: 'Game not found' });
+        }
+
+        res.status(204).send(); // No content for successful deletion
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
 
 
 // Create an offer
@@ -198,7 +310,7 @@ router.get('/offers', async (req, res) => {
 });
 
 // Accept or reject an offer
-router.patch('/offers/:id', isOfferedUser, async (req, res) => {
+router.patch('/offers/:id', /*isOfferedUser,*/ async (req, res) => {
     try {
         const { state } = req.body;
 
