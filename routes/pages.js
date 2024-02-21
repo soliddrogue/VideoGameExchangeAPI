@@ -218,9 +218,9 @@ router.post('/games', async (req, res) => {
 // Route to get all games for a user
 router.get('/games/:email', async (req, res) => {
     try {
-        const userEmail = req.params.userId;
+        const email = req.params.email;
 
-        const userGames = await Games.find({ user: userEmail });
+        const userGames = await Games.find({ user: email });
 
         res.status(200).json(userGames);
     } catch (error) {

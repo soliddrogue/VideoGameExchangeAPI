@@ -54,12 +54,7 @@ db.once('open', () => console.log("Connected to Database"));
 // Set the port for the server to listen on, use the environment variable PORT if available, otherwise default to 3000
 const PORT = process.env.PORT || 3001;
 
-const sslOptions = {
-    key: fs.readFileSync('path/to/your/key.pem'),
-    cert: fs.readFileSync('path/to/your/cert.pem')
-  };
-  
-  // Create an HTTPS server
-  https.createServer(sslOptions, app).listen(3001, () => {
-    console.log(`HTTPS Server is running on port 3001`);
-  });
+// Start the server and listen on the specified port
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
