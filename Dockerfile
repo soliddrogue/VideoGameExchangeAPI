@@ -1,7 +1,7 @@
-# Use an official Node.js runtime as a base image
+# Use an official Node.js runtime as a base image for your Node.js app
 FROM node:14
 
-# Set the working directory in the container
+# Set the working directory in the container for your app
 WORKDIR /app
 
 # Copy package.json and package-lock.json to the working directory
@@ -13,7 +13,7 @@ RUN npm install
 # Copy the rest of the application code to the working directory
 COPY . .
 
-# Set environment variables
+# Set environment variables for your app
 ENV NODE_ENV=production
 ENV DATABASE_HOST=mongodb://your_mongo_host:2717/
 ENV DATABASE_NAME=Games
@@ -25,4 +25,3 @@ EXPOSE 3001
 
 # Command to run your application
 CMD ["npm", "start"]
-

@@ -334,7 +334,7 @@ router.patch('/offers/:id', /*isOfferedUser,*/ async (req, res) => {
 });
 
 // Delete an offer
-router.delete('/offers/:id', /*isOfferedUser*/ async (req, res) => {
+router.delete('/offers/:id',  async (req, res) => {
     try {
         // Delete the offer
         await Offer.findByIdAndDelete(req.params.id);
@@ -347,9 +347,9 @@ router.delete('/offers/:id', /*isOfferedUser*/ async (req, res) => {
 });
 
 
-router.put('/offers/:id', /*isOfferedUser*/ async (req, res) => {
+router.put('/offers/:id',  async (req, res) => {
     try {
-        // Delete the offer
+
         await Offer.findByIdAndUpdate(req.params.id);
 
         res.status(204).send();
