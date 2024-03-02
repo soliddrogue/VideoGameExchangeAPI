@@ -2,14 +2,17 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt= require('bcrypt');
-const app = express()
+const app = express();
 const User = require('../models/userModel');
 const Games = require('../models/gamesModel');
 const Offer = require('../models/offerModel');
 const {isLoggedIn} = require('../middleware/auth');
+const {sendToKafka} = require('../middleware/kafkaProducer'); // Adjust the path accordingly
 app.use(isLoggedIn);
-
 app.use(express.static('public'))
+
+
+
 
 // Route to handle signup
 router.post('/signup', async (req, res) => {
@@ -75,6 +78,7 @@ router.post('/signup', async (req, res) => {
 
 // Route to handle login
 router.post('/login', (req, res) => {
+    console.log("haha");
     // Extract email and password from request body
     let { email, password } = req.body;
     email = email.trim();
@@ -155,6 +159,14 @@ try {
             { $set: { password: hashedNewPassword } },
             { new: true }
         );
+
+        // Send Kafka message for password change
+        sendToKafka('password-change-topic', {
+            userId: updatedUser._id,
+            email: updatedUser.email,
+            action: 'passwordChange'
+        });
+
 
         res.json({
             status: "Success",
@@ -262,7 +274,6 @@ router.delete('/games/:gameId', async (req, res) => {
     }
 });
 
-
 // Create an offer
 router.post('/offers', async (req, res) => {
     try {
@@ -279,6 +290,15 @@ router.post('/offers', async (req, res) => {
 
         // Save the new offer to the database
         const savedOffer = await newOffer.save();
+
+         // Send Kafka message for offer creation
+         sendToKafka('offer-topic', {
+            userId: req.session.user.id,
+            action: 'offerCreation',
+            offerId: savedOffer._id
+        });
+
+    
 
         res.status(201).json(savedOffer);
     } catch (error) {
@@ -325,6 +345,17 @@ router.patch('/offers/:id', /*isOfferedUser,*/ async (req, res) => {
             { $set: { state } },
             { new: true }
         );
+
+
+        // Send Kafka message for offer acceptance/rejection
+        sendToKafka('offer-topic', {
+            userId: req.session.user.id,
+            action: state === 'accepted' ? 'offerAccepted' : 'offerRejected',
+            offerId: updatedOffer._id
+        });
+
+ 
+
 
         res.json(updatedOffer);
     } catch (error) {

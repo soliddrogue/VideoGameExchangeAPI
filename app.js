@@ -35,7 +35,7 @@ app.use("/", routes);
 
 
 // Connect to the MongoDB database named 'FocusFlow' running locally on port 2717
-mongoose.connect('mongodb://localhost:2717/Games', {
+mongoose.connect('mongodb://mongo:27017/Games', {
     useNewUrlParser: true,
     useUnifiedTopology: true
 });
