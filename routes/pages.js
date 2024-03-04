@@ -12,8 +12,6 @@ app.use(isLoggedIn);
 app.use(express.static('public'))
 
 
-
-
 // Route to handle signup
 router.post('/signup', async (req, res) => {
     try {
@@ -78,7 +76,6 @@ router.post('/signup', async (req, res) => {
 
 // Route to handle login
 router.post('/login', (req, res) => {
-    console.log("haha");
     // Extract email and password from request body
     let { email, password } = req.body;
     email = email.trim();
@@ -103,7 +100,7 @@ router.post('/login', (req, res) => {
                                 id: data.id,
                                 email: data.email  
                             };
-                            //req.session.isLoggedIn() =  true;
+                          
                                 res.json({
                                     status:"Success",
                                     message:"User Sucessfully Logged in"
@@ -166,7 +163,6 @@ try {
             email: updatedUser.email,
             action: 'passwordChange'
         });
-
 
         res.json({
             status: "Success",
@@ -298,7 +294,7 @@ router.post('/offers', async (req, res) => {
             offerId: savedOffer._id
         });
 
-    
+        
 
         res.status(201).json(savedOffer);
     } catch (error) {
@@ -354,8 +350,8 @@ router.patch('/offers/:id', /*isOfferedUser,*/ async (req, res) => {
             offerId: updatedOffer._id
         });
 
- 
-
+        
+       
 
         res.json(updatedOffer);
     } catch (error) {

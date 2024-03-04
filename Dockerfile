@@ -1,5 +1,5 @@
 # Use an official Node.js runtime as a base image for your Node.js app
-FROM node:14
+FROM node:16
 
 # Set the working directory in the container for your app
 WORKDIR /app

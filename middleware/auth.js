@@ -46,25 +46,5 @@ const isLoggedIn = async function (req, res, next) {
   }
 };
 
-/*
-// Middleware to check if the user is the offered user
-const isOfferedUser = async (req, res, next) => {
-    try {
-        // Assuming that the offeredUserId is in the request parameters
-        const offeredUserId = req.params.offeredUserId;
 
-        // Check if the logged-in user matches the offered user
-        if (req.session.user.id === offeredUserId) {
-            // User is the offered user, proceed to the next middleware or route handler
-            next();
-        } else {
-            // User is not the offered user, send an unauthorized response
-            res.status(401).send('Unauthorized User');
-        }
-    } catch (error) {
-        console.error('Error in isOfferedUser middleware:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-};
-*/
 module.exports = {isLoggedIn};
